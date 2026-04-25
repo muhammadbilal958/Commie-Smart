@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTech Committee Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: #305496 !important; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .status-done { background-color: #fffde7 !important; border-left: 5px solid #fbc02d !important; }
+        .table thead { background-color: #305496; color: white; }
+    </style>
+</head>
+<body class="pb-5">
+
+<nav class="navbar navbar-dark mb-4 shadow">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span class="navbar-brand h1 mb-0"><i class="fas fa-wallet me-2"></i> FAST Committee Mafia 💸 </span>
+        <a href="/export" class="btn btn-light btn-sm fw-bold shadow-sm">Export Excel</a>
+    </div>
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            {{ message }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card p-4 mb-4 bg-primary text-white text-center shadow-lg">
+                <h6 class="opacity-75 small">Payout Pool Balance</h6>
+                <h2 class="fw-bold">Rs. {{ total }}</h2>
+            </div>
+
+            <div class="card p-4 mb-4 shadow-sm">
+                <h6 class="text-primary fw-bold mb-3 small">REGISTER MEMBER</h6>
+                <form action="/register" method="POST">
+                    <input type="text" name="name" class="form-control mb-2" placeholder="Full Name" required>
+                    <input type="number" name="id" class="form-control mb-2" placeholder="Member ID" required>
+                    <input type="text" name="g_name" class="form-control mb-2" placeholder="Guarantor Name" required>
+                    <input type="number" name="g_id" class="form-control mb-2" placeholder="Guarantor ID" required>
+                    <button class="btn btn-success w-100 fw-bold mt-2 shadow-sm">Add Member</button>
+                </form>
+            </div>
+
+            <div class="card p-4 border-danger border-start border-4 shadow-sm">
+                <h6 class="text-danger fw-bold small mb-2"><i class="fas fa-trash-alt me-2"></i>RESET SYSTEM</h6>
+                <form action="/reset" method="POST">
+                    <input type="text" name="confirm" class="form-control form-control-sm mb-2 text-center" placeholder='Type "YES" to clear'>
+                    <button class="btn btn-outline-danger btn-sm w-100 fw-bold">Reset All Data</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4">
+                {% set target = (members|length) * 5000 %}
+                {% set percent = (total / target * 100) if target > 0 else 0 %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold text-muted small">COLLECTION PROGRESS</span>
+                    <span class="text-primary fw-bold">{{ percent|int }}%</span>
+                </div>
+                <div class="progress shadow-sm" style="height: 12px; border-radius: 10px;">
+                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: {{ percent }}%"></div>
+                </div>
+            </div>
+
+            <div class="card p-4 mb-4 border-start border-4 border-primary shadow-sm">
+                <h6 class="fw-bold text-primary mb-3 small">RECORD PAYMENT</h6>
+                <form action="/pay" method="POST" class="row g-2">
+                    <div class="col-md-3"><input type="number" name="m_id" class="form-control" placeholder="ID" required></div>
+                    <div class="col-md-3"><input type="number" name="date" class="form-control" placeholder="Day (1-31)" required></div>
+                    <div class="col-md-4">
+                        <select name="month" class="form-select">
+                            {% set months = ["Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"] %}
+                            {% for i in range(1,13) %}<option value="{{i}}">{{ months[i-1] }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2"><button class="btn btn-primary w-100"><i class="fas fa-plus"></i></button></div>
+                </form>
+            </div>
+
+            <div class="card overflow-hidden shadow">
+                <table class="table table-hover align-middle mb-0 text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th><th class="text-start">Name</th><th>Score</th><th>Balance</th><th>Status</th><th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for id, m in members.items() %}
+                        <tr class="{{ 'status-done' if m.committee_status == 'Done' else '' }}">
+                            <td><strong>{{ id }}</strong></td>
+                            <td class="text-start fw-bold">{{ m.Member_Name }}</td>
+                            <td><span class="badge {{ 'bg-success' if m.score >= 100 else 'bg-danger' }} shadow-sm">{{ m.score }}</span></td>
+                            <td class="fw-bold text-dark">Rs. {{ m.balance }}</td>
+                            <td>
+                                {% if m.committee_status == 'Done' %}
+                                    <span class="badge bg-warning text-dark border border-warning shadow-sm">PAID OUT</span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted border">PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#m{{id}}">View</button>
+                                
+                                <div class="modal fade" id="m{{id}}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered text-start">
+                                        <div class="modal-content shadow-lg">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold text-primary">{{ m.Member_Name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="mb-1 small text-muted">GUARANTOR: <strong>{{ m.Member_Gurantor }}</strong> (ID: {{ m.gurantor_id }})</p>
+                                                <hr>
+                                                <h6 class="fw-bold small">PAYMENT HISTORY</h6>
+                                                {% if m.history %}
+                                                    <div class="list-group list-group-flush shadow-sm">
+                                                        {% for mon, det in m.history.items() %}
+                                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <span>{{ mon }} ({{ det.payment_type }})</span>
+                                                            <a href="/delete/{{ id }}/{{ mon }}" class="text-danger" onclick="return confirm('Entry delete karni hai?')"><i class="fas fa-trash"></i></a>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}<p class="text-muted small">No payments recorded.</p>{% endif %}
+                                            </div>
+                                            <div class="modal-footer d-flex justify-content-between">
+                                                <a href="/manual_payout/{{ id }}" class="btn btn-warning btn-sm fw-bold">Mark as Paid Out</a>
+                                                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

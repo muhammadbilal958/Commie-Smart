@@ -1,0 +1,1 @@
+{"123": {"Member_Name": "Mavia", "Member_id": 123, "Member_Gurantor": "Ali", "gurantor_id": 786, "score": 100, "is_paid": false, "balance": 0, "history": {}, "committee_status": "Not Done"}, "345": {"Member_Name": "Ali", "Member_id": 345, "Member_Gurantor": "Mavia", "gurantor_id": 123, "score": 100, "is_paid": false, "balance": 0, "history": {}, "committee_status": "Not Done"}}
